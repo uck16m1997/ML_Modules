@@ -65,9 +65,6 @@ if __name__ == "__main__":
     cor_mat = X.corr()
     sns.heatmap(cor_mat)
 
-    X["TIME_SINCE_CUSTOMER"]
-    X["REFERENCE_DATE_YEAR"]
-    X["TIME_SINCE_FIRST_ACCOUNT_CR_YEAR"]
 
     model = sm.Logit(y, X)
     results = model.fit(method="newton", maxiter=1000)
