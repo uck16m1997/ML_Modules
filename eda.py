@@ -1,110 +1,14 @@
 from ml_package import *
 
-groups = {
-    "CREDIT/DEBT AMT": [
-        "CURRENT_CREDIT_LIMIT",
-        "CUSTOMER_TOTAL_DEBT_AMOUNT",
-        "TOTAL_OUTST_CREDIT_AMOUNT",
-    ],
-    "PAY_OUTS": [
-        "AVG_LAST_12_M_T_PAY_T_OUTS_BAL",
-        "AVG_LAST_3_M_T_PAY_T_OUTS_BAL",
-        "AVG_LAST_6_M_T_PAY_T_OUTS_BAL",
-        "LAST_MNTH_TOTAL_PAY_T_OUTS_BAL",
-        "LAST_MNTH_TOTAL_PAY_OUTS_BAL",
-        "AVG_LAST_6_M_T_PAY_OUTS_BAL",
-        "AVG_LAST_3_M_T_PAY_OUTS_BAL",
-        "AVG_LAST_12_M_T_PAY_OUTS_BAL",
-    ],
-    "TOTAL_PAYMENT": [
-        "LAST_3_MONTHS_TOTAL_PAYMENT",
-        "LAST_6_MNTH_TOTAL_PAYMENT",
-        "LAST_MONTH_TOTAL_PAYMENT",
-        "LAST_12_MONTHS_TOTAL_PAYMENT",
-    ],
-    # "MAX_DAYS_PASSED_DUE": [
-    #     # "MAX_DAYS_PASSED_DUE",
-    #     # "MAX_DAY_PASS_DUE_ALL_PRD_CUS",
-    #     # "LAST_3_MNTH_MAX_DAY_PASS_DUE",
-    #     "LAST_6_MNTH_MAX_DAY_PASS_DUE", ## Only this remains after inapp elimination
-    #     # "LAST_12_MNTH_MAX_DAY_PASS_DUE",
-    # ],
-    # #  "NUM_DELINQUENCY_1": [ ## Eliminated after inapp too many Nulls
-    # #     # "LAST_3_MN_NUM_DELINQUENCY_1",
-    # #     # "LAST_6_MN_NUM_DELINQUENCY_1",
-    # #     # "LAST_12_MN_NUM_DELINQUENCY_1",
-    # # ],
-    # # "NUM_DELINQUENCY_2": [
-    # #     # "LAST_3_MN_NUM_DELINQUENCY_2",
-    # #     # "LAST_6_MN_NUM_DELINQUENCY_2",
-    # #     # "LAST_12_MN_NUM_DELINQUENCY_2",
-    # # ],
-    # # "NUM_DELINQUENCY_3": [
-    # #     # "LAST_3_MN_NUM_DELINQUENCY_3",
-    # #     # "LAST_6_MN_NUM_DELINQUENCY_3",
-    # #     # "LAST_12_MN_NUM_DELINQUENCY_3",
-    # # ],
-    # # "NUM_DELINQUENCY_3_P": [
-    # #     # "LAST_3_MN_NUM_DELINQUENCY_3_P",
-    # #     # "LAST_6_MN_NUM_DELINQUENCY_3_P",
-    # #     # "LAST_12_MN_NUM_DELINQUENCY_3_P",
-    # # ],
-    # # "X_P_DPD_AMNT": [ ## Eliminated after inapp too many Nulls
-    # #     # "LAST_12_MN_30_P_DPD_AMNT",
-    # #     # "LAST_12_MN_60_P_DPD_AMNT",
-    # #     # "LAST_12_MN_90_P_DPD_AMNT",
-    # # ],
-    # "WORST_PAY_STATUS": [
-    #     "LAST_6_MN_WORST_PAY_STATUS",
-    #     "LAST_12_MN_WORST_PAY_STATUS",
-    # ],
-    "TOT_PAYMENT": [
-        "LAST_6_12_TOT_PAYMENT",
-        "LAST_1_3_TOT_PAYMENT",
-        "LAST_1_6_TOT_PAYMENT",
-        "LAST_1_12_TOT_PAYMENT",
-        "LAST_3_6_TOT_PAYMENT",
-        "LAST_3_12_TOT_PAYMENT",
-    ],
-    "PTT/LAST_6_MNTH_TOTAL_NUM_LOANS": [
-        "PTT",
-        "LAST_6_MNTH_TOTAL_NUM_LOANS",
-    ],
-}
-
-
 def eda_prep():
-    df = pd.read_table(
-        "gpl_training _sample.tab.txt", delimiter="\t", encoding="ISO-8859-1"
-    )
 
-    # Replace missing values $null$ with na for practical reasons
-    df.replace(to_replace="$null$", value=np.nan, inplace=True)
 
-    label_col = "NEW_DEFAULT_FLAG"
+
 
     # Remove rows with missing labels if any
     df.dropna(axis=0, subset=[label_col], inplace=True)
 
-    # Column type inconsistencies
-    df["CUSTOMER_CITY"] = df["CUSTOMER_CITY"].astype(str)
-    df["CUSTOMER_INCOME"] = df["CUSTOMER_INCOME"].astype(float)
-    df["LAST_6_MNTH_TOTAL_NUM_LOANS"] = df["LAST_6_MNTH_TOTAL_NUM_LOANS"].astype(float)
 
-    df.drop(
-        columns=["CUSTOMER_ID", "MUSTERI_NO", "REF_DATE", "CUSTOMER_BIRTH_DATE"],
-        inplace=True,
-    )
-
-    df, details = data_prep.init_prep(df)
-    details["Categoric"] = ["BRANCH_CODE", "LOAN_CHANNEL_ID", "CUSTOMER_CITY"]
-    df[["BRANCH_CODE", "LOAN_CHANNEL_ID", "CUSTOMER_CITY"]] = df[
-        [
-            "BRANCH_CODE",
-            "LOAN_CHANNEL_ID",
-            "CUSTOMER_CITY",
-        ]
-    ].astype(str)
 
     return (df.drop(columns=[label_col]), df[label_col])
 
