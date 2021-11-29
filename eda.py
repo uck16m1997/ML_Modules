@@ -2,8 +2,11 @@ from ml_package import *
 
 def eda_prep():
 
+    df = pd.read_csv("titanic/train.csv")
 
+    label_col = "Survived"
 
+    df = data_prep.init_prep(df)
 
     # Remove rows with missing labels if any
     df.dropna(axis=0, subset=[label_col], inplace=True)
