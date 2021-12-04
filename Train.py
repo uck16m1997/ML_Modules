@@ -1,26 +1,20 @@
-from eda import groups, eda_prep
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from ml_package import *
 
-### Load the Data with insights and fixes learned from eda process ###
-X, y = eda_prep()
+### Load the Data that is outputted by Initial Prep ###
+X = pd.read_parquet("Data/train.parquet")
+y = X["Target"]
+X.drop(columns=["Target"], inplace=True)
 
-# Find inappropriate features
-col_dict = data_prep.find_inapp(X)
-# Remove constant features
-X.drop(columns=col_dict["Constant"], inplace=True)
-# Remove categoric columns with too many unique values
-X.drop(columns=col_dict["Unique"], inplace=True)
-# Remove categoric columns with too many null values
-X.drop(columns=col_dict["Null"], inplace=True)
-# Remove categoric columns with too little variance
-X.drop(columns=col_dict["Low Variance"], inplace=True)
-
-# Find correlations among data
-### Not Automated done by groups in EDA ###
-### To Do Automate Correlation Groups From Correlation Matrix ###
-### Control the Variance Inflation Factor and AutoGroup PC_i P values ###
+### Load the Config files
+with open("Config/ColumnConf.json") as f:
+    col_details = json.load(f)
+with open("Config/RunConf.json") as f:
+    run_details = json.load(f)
+if run_details["group_func"]:
+    with open("Config/GroupsConf.json") as f:
+        groups = json.load(f)
 
 
 # Under Sampling for more balanced target distribution
@@ -29,7 +23,7 @@ from imblearn.under_sampling import RandomUnderSampler
 under = RandomUnderSampler(sampling_strategy=0.5, random_state=42)
 X, y = under.fit_resample(X, y)
 
-cat_cols = X.select_dtypes(include = "object").columns
+cat_cols = X.select_dtypes(include="object").columns
 # Create Dummy Variables here
 encoder = ce.OneHotEncoder()
 X, tmp, low_vars, encoded_cols = data_prep.encode_cat(

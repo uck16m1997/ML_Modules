@@ -19,18 +19,21 @@ def date_seperate(X, y=None):
     return X
 
 
-def dis_col_ctrl(df, cols=None):
+def dis_col_ctrl(df, cols=None, var_thresh=0.9):
     dis_cols = []
-
+    cat_cols = []
     num_columns = cols if cols else df.columns
     for c in num_columns:
         try:
             if (df[~df[c].isna()][c].astype(int) == df[~df[c].isna()][c]).all():
-                if len(df[c].unique()) / len(df[c]) <= 0.05:
+                if len(df[c].unique()) / len(df[c]) >= var_thresh:
+                    df[c] = df[c].astype(str)
+                    cat_cols.append(c)
+                else:
                     dis_cols.append(c)
         except ValueError:
             pass
-    return dis_cols
+    return dis_cols, cat_cols
 
 
 def cont_col_ctrl(df, cols=None):
@@ -46,28 +49,28 @@ def cont_col_ctrl(df, cols=None):
 
 
 def init_prep(df):
+    ## Seperate Dates into Year, Month, Day
+    df = date_seperate(df)
     ## Continious Numeric Columns
     cont_cols = cont_col_ctrl(df)
     df[cont_cols] = df[cont_cols].astype(float)
     ## Ordinal Categorical Columns
-    dis_cols = dis_col_ctrl(df)
+    dis_cols, cat_cols = dis_col_ctrl(df)
+    cont_cols = list(pd.Index(cont_cols).difference(dis_cols + cat_cols))
+    cat_cols = list(df.columns.difference(dis_cols + cont_cols))
 
-    cont_cols = pd.Index(cont_cols).difference(dis_cols)
-    ## Seperate Dates into Year, Month, Day
-    df = date_seperate(df)
-
-    return (df, {"Continious": cont_cols, "Discrete": dis_cols})
+    return (df, {"Continious": cont_cols, "Discrete": dis_cols, "Categoric": cat_cols})
 
 
 def get_column_types(df):
     cont_cols = cont_col_ctrl(df)
-    dis_cols = dis_col_ctrl(df)
+    dis_cols, cat_cols = dis_col_ctrl(df)
     cont_cols = list(pd.Index(cont_cols).difference(dis_cols))
     cat_cols = list(df.columns.difference(dis_cols + list(cont_cols)))
     return {"Continious": cont_cols, "Discrete": dis_cols, "Categoric": cat_cols}
 
 
-def find_inapp(df, null_thresh=0.7, many_vals=0.9, const_thresh=0.9):
+def find_inapp(df, null_thresh=0.5, var_thresh=0.9, const_thresh=0.9):
     faulty_cols = {"Constant": [], "Unique": [], "Null": [], "Low Variance": []}
     for c in df.columns:
         # Remove Columns that contains no information
@@ -75,7 +78,7 @@ def find_inapp(df, null_thresh=0.7, many_vals=0.9, const_thresh=0.9):
             faulty_cols["Constant"].append(c)
         # Remove Categoric Columns that have too many unique values
         elif (
-            str(df[c].dtype) == "object" and len(df[c].unique()) / len(df) >= many_vals
+            str(df[c].dtype) == "object" and len(df[c].unique()) / len(df) >= var_thresh
         ):
             faulty_cols["Unique"].append(c)
         # Remove columns with too much null

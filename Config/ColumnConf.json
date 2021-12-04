@@ -1,0 +1,1 @@
+{"Continious": ["Age", "Fare"], "Discrete": ["Pclass", "SibSp", "Parch"], "Categoric": ["Embarked", "Sex", "Ticket"]}

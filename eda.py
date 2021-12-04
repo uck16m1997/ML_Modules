@@ -1,5 +1,6 @@
 from ml_package import *
 
+
 def eda_prep():
 
     df = pd.read_csv("titanic/train.csv")
@@ -10,8 +11,6 @@ def eda_prep():
 
     # Remove rows with missing labels if any
     df.dropna(axis=0, subset=[label_col], inplace=True)
-
-
 
     return (df.drop(columns=[label_col]), df[label_col])
 
@@ -38,7 +37,7 @@ def plot_histograms(df, groups=None, cont_cols=None):
             plt.show()
 
 
-def plot_correlation_heatmaps(df, groups=groups):
+def plot_correlation_heatmaps(df, groups):
     # Correlation Heatmaps
     for k, v in groups.items():
         plt.clf()

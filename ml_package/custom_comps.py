@@ -45,10 +45,46 @@ def CenterScaleTransform(x_train, x_test, scaler, pow_transformer, num_columns=N
     return x_train, x_test
 
 
-def HierachicalClustering():
-    corr_mat = X.corr()
+def CorrelationClustering(X, columns=None, threshold=0.2):
+    if not columns:
+        col_details = data_prep.get_column_types(X)
+        columns = col_details["Continious"] + col_details["Discrete"]
+    corr_mat = X[columns].corr()
     distance_mat = 1 - np.abs(corr_mat)
-    return None
+    return AgglomerativeClustering(distance_mat, threshold)
+
+
+def AgglomerativeClustering(distance_mat, threshold=0.2):
+    groups = {}
+    distance_mat.replace({0: 1}, inplace=True)
+    values = np.sort((np.unique(distance_mat.values)))
+    values = values[values < threshold]
+
+    for v in values:
+        cols = list(distance_mat.iloc[np.where(distance_mat == v)].columns)
+        k = "_".join(cols)
+        added_list = []
+        keys = list(groups.keys())
+        for key in keys:
+            for c in cols:
+                if c in key:
+                    if len(added_list):
+                        groups[key].update(groups[added_list[0]])
+                        new_key = "_".join(groups[key])
+                        groups[new_key] = groups.pop(key)
+                        groups.pop(added_list[0])
+                        added_list = [new_key]
+                    else:
+                        groups[key].update(cols)
+                        new_key = "_".join(groups[key])
+                        groups[new_key] = groups.pop(key)
+                        added_list.append(new_key)
+
+        if len(added_list) == 0:
+            groups[k] = set()
+            groups[k].update(cols)
+
+    return groups
 
 
 def InfoGainDiscretizer(

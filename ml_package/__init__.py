@@ -4,6 +4,8 @@ import math
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
+import json
 
 # Set plot style
 plt.style.use("ggplot")
@@ -21,3 +23,4 @@ from sklearn.preprocessing import RobustScaler, PowerTransformer
 from . import metrics
 from . import data_prep
 from . import custom_comps
+from . import parse_text
