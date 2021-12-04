@@ -1,3 +1,6 @@
+from ml_package import *
+
+
 def gender_from_name(df, name_col):
     def get_gender(s):
         m = re.search("(Sir|Lady|Mrs?|Ms|Miss)\.", s)

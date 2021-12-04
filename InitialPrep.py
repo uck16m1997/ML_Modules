@@ -58,6 +58,7 @@ if __name__ == "__main__":
     ## if classification asses the need for sampling methods
     class_sample = False
     if method == "Classification":
+        dist_thresh = 1 / (len(y.unique) * 2)
         min_class = min(y.value_counts())
         if min_class / len(y) < 0.3:
             class_sample = True

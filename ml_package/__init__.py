@@ -24,3 +24,5 @@ from . import metrics
 from . import data_prep
 from . import custom_comps
 from . import parse_text
+from . import binning
+from . import data_sampling

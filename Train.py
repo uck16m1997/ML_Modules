@@ -12,16 +12,13 @@ with open("Config/ColumnConf.json") as f:
     col_details = json.load(f)
 with open("Config/RunConf.json") as f:
     run_details = json.load(f)
-if run_details["group_func"]:
+if run_details["group_funcs"]:
     with open("Config/GroupsConf.json") as f:
         groups = json.load(f)
 
 
-# Under Sampling for more balanced target distribution
-from imblearn.under_sampling import RandomUnderSampler
-
-under = RandomUnderSampler(sampling_strategy=0.5, random_state=42)
-X, y = under.fit_resample(X, y)
+if run_details["class_sampling"]:
+    X, y = data_sampling.under_sample(X, y, 0.5, 42)
 
 cat_cols = X.select_dtypes(include="object").columns
 # Create Dummy Variables here
