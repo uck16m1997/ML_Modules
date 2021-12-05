@@ -53,6 +53,7 @@ def encode_inc_dim(
 
     # Copy train
     X_train = X_train.copy()
+    tmp_encoded = encoder.fit_transform(X_train[obj_columns])
     if drop_first:
         for c in obj_columns:
 
@@ -63,7 +64,10 @@ def encode_inc_dim(
             # Drop original columns
             X_train.drop(columns=c, inplace=True)
             X_train[tmp_encoded.columns[:-1]] = tmp_encoded[tmp_encoded.columns[:-1]]
-            if X_test:
+            try:
+                if X_test == None:
+                    pass
+            except:
                 # Encode obj_columns
                 tmp_encoded = encoder.transform(X_test[c])
                 # Drop original columns
@@ -75,7 +79,10 @@ def encode_inc_dim(
         # Drop original columns
         X_train.drop(columns=obj_columns, inplace=True)
         X_train[tmp_encoded.columns] = tmp_encoded
-        if X_test:
+        try:
+            if X_test == None:
+                pass
+        except:
             X_test = X_test.copy()
             tmp_encoded = encoder.transform(X_test[obj_columns])
             X_test.drop(columns=obj_columns, inplace=True)

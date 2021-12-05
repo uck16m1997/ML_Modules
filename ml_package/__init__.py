@@ -27,3 +27,4 @@ from . import parse_text
 from . import binning
 from . import data_sampling
 from . import encoding
+from . import process
