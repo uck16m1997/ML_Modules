@@ -90,63 +90,6 @@ def find_inapp(df, null_thresh=0.5, var_thresh=0.9, const_thresh=0.9):
     return faulty_cols
 
 
-def encode_cat(
-    X_train,
-    X_test,
-    encoder,
-    supervised=False,
-    y_train=None,
-    obj_columns=None,
-    dimension_inc=False,
-):
-    if not obj_columns:
-        obj_columns = X_train.select_dtypes(include=["object"]).columns
-
-    if dimension_inc:
-        return encode_inc_dim(X_train, X_test, encoder, obj_columns)
-
-    X_train = X_train.copy()
-    if X_test:
-        X_test = X_test.copy()
-        if supervised:
-            X_train[obj_columns] = encoder.fit_transform(X_train[obj_columns], y_train)
-            X_test[obj_columns] = encoder.transform(X_test[obj_columns])
-
-        else:
-
-            X_train[obj_columns] = encoder.fit_transform(X_train[obj_columns])
-            X_test[obj_columns] = encoder.transform(X_test[obj_columns])
-    else:
-        if not supervised:
-            X_train[obj_columns] = encoder.fit_transform(X_train[obj_columns])
-        else:
-            X_train[obj_columns] = encoder.fit_transform(X_train[obj_columns], y_train)
-
-    return X_train, X_test
-
-
-def encode_inc_dim(X_train, X_test, encoder, obj_columns=None, const_thresh=0.9):
-
-    X_train = X_train.copy()
-
-    tmp_encoded = encoder.fit_transform(X_train[obj_columns])
-    X_train.drop(columns=obj_columns, inplace=True)
-    X_train[tmp_encoded.columns] = tmp_encoded
-    if X_test:
-        X_test = X_test.copy()
-
-        tmp_encoded = encoder.transform(X_test[obj_columns])
-        X_test.drop(columns=obj_columns, inplace=True)
-        X_test[tmp_encoded.columns] = tmp_encoded
-
-    faulty_cols = []
-    for c in X_train.columns:
-        if max(X_train[c].value_counts()) / len(X_train) > const_thresh:
-            faulty_cols.append(c)
-
-    return X_train, X_test, faulty_cols, tmp_encoded.columns
-
-
 def impute_missing(
     X_train, X_test, numImputer, catImputer, num_columns=None, obj_columns=None
 ):
@@ -178,25 +121,6 @@ def impute_missing(
 #        76, 76, 78, 79, 80, 81])
 # y =pd.Series([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0,
 #        0, 0])
-
-
-def cat_embeddings(X, y, cat_cols):
-    for cat_col in cat_cols:
-        col_encodes = []
-        for c in X.columns:
-            if cat_col in c:
-                col_encodes.append(c)
-
-        model = tf.keras.Sequential()
-        model.add(
-            tf.keras.layers.Dense(
-                int(math.sqrt(len(col_encodes))), input_shape=(len(col_encodes),)
-            )
-        )
-        model.add(
-            tf.keras.layers.Dense(1, input_shape=(int(math.sqrt(len(col_encodes))),))
-        )
-        # model.fit()
 
 
 # def find_susp(df):

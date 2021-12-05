@@ -16,18 +16,17 @@ if run_details["group_funcs"]:
     with open("Config/GroupsConf.json") as f:
         groups = json.load(f)
 
-
+# If there is a need to data sample
 if run_details["class_sampling"]:
     X, y = data_sampling.under_sample(X, y, 0.5, 42)
 
+# If there are high cardinality columns
 cat_cols = X.select_dtypes(include="object").columns
+cat_cols = cat_cols.difference(run_details["high_cardinality"])
 # Create Dummy Variables here
-encoder = ce.OneHotEncoder()
-X, tmp, low_vars, encoded_cols = data_prep.encode_cat(
-    X,
-    X_test=None,
-    encoder=encoder,
-    dimension_inc=True,
+encoder = ce.OneHotEncoder(use_cat_names=True)
+X, tmp, low_vars, encoded_cols = encoding.encode_inc_dim(
+    X, X_test=None, encoder=encoder, obj_columns=cat_cols
 )
 X.drop(columns=low_vars, inplace=True)
 
@@ -60,17 +59,25 @@ for train_index, test_index in kf.split(X, y):
     )
 
     # Information Gain Binning
-    bin_cols = ["AGE"]
-    X_train[bin_cols], X_test[bin_cols] = custom_comps.InfoGainDiscretizer(
-        X_train[bin_cols], X_test[bin_cols], y_train
-    )
+    # bin_cols = ["AGE"]
+    # X_train[bin_cols], X_test[bin_cols] = custom_comps.InfoGainDiscretizer(
+    #     X_train[bin_cols], X_test[bin_cols], y_train
+    # )
 
-    ## PCA Transformation
-    X_train, X_test = custom_comps.PCATransformer(X_train, X_test, groups)
+    ## Dimensionality Reduction
+    if run_details["group_funcs"]:
+        X_train, X_test = custom_comps.PCATransformer(X_train, X_test, groups)
 
     # Encode categorical data
-    # encoder = ce.TargetEncoder()
-    # data_prep.encode_cat(X_train, X_test, encoder, supervised=True, y_train=y_train)
+    encoder = ce.LeaveOneOutEncoder()
+    (X_train, X_test) = encoding.encode_cat(
+        X_train,
+        X_test,
+        encoder,
+        supervised=True,
+        y_train=y_train,
+        obj_columns=run_details["high_cardinality"],
+    )
 
     # Center Scale PowerTransform the Data
     scaler = RobustScaler()
@@ -86,15 +93,15 @@ for train_index, test_index in kf.split(X, y):
     metrics["recall"].append(recall_score(y_test, pred))
 
 
-import statsmodels.api as sm
+# import statsmodels.api as sm
 
-X_train["INTERCEPT"] = 1
-# X_train.drop(columns=["Intercept"], inplace=True)
-model = sm.Logit(y_train, X_train)
-results = model.fit(method="bfgs", maxiter=1000)
-results.summary()
+# X_train["INTERCEPT"] = 1
+# # X_train.drop(columns=["Intercept"], inplace=True)
+# model = sm.Logit(y_train, X_train)
+# results = model.fit(method="bfgs", maxiter=1000)
+# results.summary()
 
-from sklearn.metrics import confusion_matrix
+# from sklearn.metrics import confusion_matrix
 
-cm = confusion_matrix(y_test, pred)
-cm
+# cm = confusion_matrix(y_test, pred)
+# cm

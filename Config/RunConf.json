@@ -1,1 +1,1 @@
-{"class_sampling": false, "group_funcs": false, "method": "Classification"}
+{"class_sampling": false, "group_funcs": false, "method": "Classification", "high_cardinality": ["Ticket"]}
