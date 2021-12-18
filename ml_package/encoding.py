@@ -1,6 +1,73 @@
 from ml_package import *
 
 
+class Categorical_Encoder:
+    def __init__(self, supervised=False):
+        self.supervised = supervised
+
+    def fit(self, X_train, encoder, obj_columns=[], y_train=None):
+        if len(obj_columns) == 0:
+            self.obj_columns = X_train.select_dtypes(include=["object"]).columns
+        else:
+            self.obj_columns = obj_columns
+
+        self.encoder = encoder
+
+        if self.supervised:
+            self.encoder.fit(X_train[self.obj_columns], y_train)
+        else:
+            self.encoder.fit(X_train[self.obj_columns])
+
+    def transform(self, X):
+        X.loc[:, self.obj_columns] = self.encoder.transform(X.loc[:, self.obj_columns])
+        return X
+
+    def fit_transform(self, X_train, encoder, obj_columns=[], y_train=None):
+        self.fit(X_train, encoder, obj_columns, y_train)
+        return self.transform(X_train)
+
+
+class Upper_Dimension_Encoder:
+    def __init__(self, drop_first=True):
+        self.drop_first = drop_first
+
+    def fit(self, X_train, encoder, obj_columns=[]):
+        if len(obj_columns) == 0:
+            self.obj_columns = X_train.select_dtypes(include=["object"]).columns
+        else:
+            self.obj_columns = obj_columns
+
+        self.encoder = encoder
+        self.encoder.cols = obj_columns
+
+        self.encoder.fit(X_train[self.obj_columns])
+
+    def transform(self, X, drop_invariant=1):
+        res = self.encoder.transform(X.loc[:, self.obj_columns])
+        if self.drop_first:
+            remove_list = list(self.encoder.cols[:])
+            for c in self.encoder.feature_names:
+                if c.split("_")[0] in remove_list:
+                    res.drop(columns=[c], inplace=True)
+                    remove_list.remove(c.split("_")[0])
+        X = X.drop(columns=self.obj_columns)
+        X[res.columns] = res
+
+        if drop_invariant < 1:
+            faulty_cols = []
+            for c in X_train.columns:
+                if max(X_train[c].value_counts()) / len(X_train) > drop_invariant:
+                    faulty_cols.append(c)
+            self.faulty_cols = faulty_cols
+            X.drop(columns=faulty_cols, inplace=True)
+
+        return X
+
+    def fit_transform(self, X_train, encoder, obj_columns=[], drop_invariant=1):
+        self.fit(X_train, encoder, obj_columns)
+        return self.transform(X_train, drop_invariant)
+
+
 def encode_cat(
     X_train,
     X_test,

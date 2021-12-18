@@ -1,6 +1,74 @@
 from ml_package import *
 
 
+class Info_Gain_Discretizer:
+    def __init__(self):
+        pass
+
+    def fit(
+        self,
+        X_train,
+        columns,
+        y,
+        split_count=None,
+        iter_amount=100,
+        regularization_rate=0.001,
+    ):
+
+        X_train = X_train.copy()
+        if type(X_train) == type(pd.Series):
+            X_train = pd.DataFrame(X_train)
+        self.bins = {}
+        X_train["Target"] = y
+        self.columns = columns
+        for c in columns:
+            if c == "Target":
+                continue
+            tmp_sorted = X_train.sort_values(by=[c])[[c, "Target"]]
+            bins = optimize_infgain_bins(
+                tmp_sorted[c],
+                tmp_sorted["Target"],
+                split_count=split_count,
+                iter_amount=iter_amount,
+                regularization_rate=regularization_rate,
+            )
+            self.bins[c] = bins
+
+    def transform(self, x):
+        for c in self.columns:
+            bins = self.bins[c]
+            masks = [(x[c] <= bins[0])]
+            for i in range(len(bins) - 1):
+                mask = (x[c] > bins[i]) & (x[c] <= bins[i + 1])
+                masks.append(mask)
+            masks.append(x[c] > bins[-1])
+
+            for i in range(len(masks)):
+                x.loc[masks[i], c] = i + 1.0
+
+        return x
+
+    def fit_transform(
+        self,
+        X_train,
+        columns,
+        y,
+        split_count=None,
+        iter_amount=100,
+        regularization_rate=0.001,
+    ):
+
+        self.fit(
+            X_train,
+            columns,
+            y,
+            split_count=split_count,
+            iter_amount=iter_amount,
+            regularization_rate=regularization_rate,
+        )
+        return self.transform(X_train)
+
+
 def InfoGainDiscretizer(
     x_train, x_test, y, split_count=None, iter_amount=100, regularization_rate=0.04
 ):
@@ -15,9 +83,9 @@ def InfoGainDiscretizer(
         bins = optimize_infgain_bins(
             tmp_sorted[c],
             tmp_sorted["Target"],
-            split_count=None,
-            iter_amount=100,
-            regularization_rate=0.001,
+            split_count=split_count,
+            iter_amount=iter_amount,
+            regularization_rate=regularization_rate,
         )
         masks = [(x_repl[c] <= bins[0])]
         for i in range(len(bins) - 1):
@@ -51,7 +119,7 @@ def optimize_infgain_bins(
     for s in split_count:
         knot, inf = inf_gain_binning_locked(x, y, s, iter_amount)
         res["Knots"].append(knot)
-        res["Infs"].append(inf - s * regularization_rate)
+        res["Infs"].append(inf - (s ** 2) * regularization_rate)
 
     return res["Knots"][np.argmax(res["Infs"])]
 
@@ -72,7 +140,7 @@ def inf_gain_binning_locked(x, y, split_count=1, iter_amount=100):
         knots = []
         # initialize bins
         bins = [0, 0]
-        # while bin index is less than
+        # while bin index is less than unique sorted array
         while bins[0] + inc_ind < len(x_sort):
             bins[1] = (x_sort[bins[0]] + x_sort[bins[0] + inc_ind]) / 2
             # if knot is already found

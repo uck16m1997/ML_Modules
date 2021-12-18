@@ -3,6 +3,98 @@ from sklearn.decomposition import PCA
 import math
 
 
+class PCA_Transformer:
+    def __init__(self, n_components=0.8, svd_solver="full"):
+        self.n_components = n_components
+        self.svd_solver = svd_solver
+
+    def fit(self, X_train, groups):
+        self.groups = groups
+        self.pcas = {}
+        for k, v in self.groups.items():
+            self.pcas[k] = PCA(self.n_components, self.svd_solver)
+            self.pcas[k].fit(X_train[v])
+
+    def transform(self, X):
+        X = X.copy()
+        for k, v in self.groups.items():
+            tmp = X[v]
+            X.drop(columns=v, inplace=True)
+            for i in range(self.pcas[k].n_components_):
+                X[f"{k}_PC_{i}"] = self.pcas[k].transform(tmp)[:, i]
+        return X
+
+    def fit_transform(self, X_train, groups):
+        self.fit(X_train, groups)
+        self.transform(X_train)
+
+
+class Center_Transformer:
+    def __init__(self):
+        pass
+
+    def fit(self, X_train, num_columns):
+        self.num_columns = num_columns
+        self.means = {}
+        for c in self.num_columns:
+            self.means[c] = X_train[c].mean()
+
+    def transform(self, X):
+        X = X.copy()
+        for c in self.num_columns:
+            X[c] = X[c] - self.means[c]
+        return X
+
+    def fit_transform(self, X_train, num_columns):
+        self.fit(X_train, num_columns)
+        return self.transform(X_train)
+
+
+class Scaling_Transformer:
+    def __init__(self):
+        pass
+
+    def fit(self, X_train, scaler, num_columns):
+        self.scaler = scaler
+        self.num_columns = num_columns
+
+        self.scaler.fit(X_train[self.num_columns])
+
+    def transform(self, X):
+        X[self.num_columns] = self.scaler.transform(X[self.num_columns])
+        return X
+
+    def fit_transform(self, X_train, scaler, num_columns):
+        self.fit(X_train, scaler, num_columns)
+        return self.transform(X_train)
+
+
+class Center_Scale_Transform:
+    def __init__(self):
+        pass
+
+    def fit(self, X, scaler, pow_transformer, num_columns):
+        self.ct = Center_Transformer()
+        self.scaler = scaler
+        self.pow_transformer = pow_transformer
+        self.num_columns = num_columns
+        X = X.copy()
+        X = self.ct.fit_transform(X, num_columns)
+        self.scaler.fit(X[num_columns])
+        self.pow_transformer.fit(X[num_columns])
+
+    def transform(self, X):
+        X = X.copy()
+        X[self.num_columns] = self.ct.transform(X[self.num_columns])
+        X[self.num_columns] = self.scaler.transform(X[self.num_columns])
+        X[self.num_columns] = self.pow_transformer.transform(X[self.num_columns])
+        return X
+
+    def fit_transform(self, X, scaler, pow_transformer, num_columns):
+        self.fit(X, scaler, pow_transformer, num_columns)
+        return self.transform(X)
+
+
 def PCATransformer(x_train, x_test, groups):
     pca = PCA(n_components=0.8, svd_solver="full")
     x_train = x_train.copy()
