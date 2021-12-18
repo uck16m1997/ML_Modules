@@ -50,6 +50,8 @@ def train_pipeline(
                     fit_params.append(
                         col_details["Discrete"] + col_details["Categoric"]
                     )
+                else:
+                    fit_params.append(a)
 
         X_train = transformer.fit_transform(*fit_params)
         X_test = transformer.transform(X_test)
