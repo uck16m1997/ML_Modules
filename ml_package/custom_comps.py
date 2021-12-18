@@ -26,7 +26,7 @@ class PCA_Transformer:
 
     def fit_transform(self, X_train, groups):
         self.fit(X_train, groups)
-        self.transform(X_train)
+        return self.transform(X_train)
 
 
 class Center_Transformer:

@@ -1,7 +1,7 @@
 from ml_package import *
 
 
-def gender_from_name(df, name_col):
+def get_info(df, name_col, func="Title"):
     def get_gender(s):
         m = re.search("(Sir|Lady|Mrs?|Ms|Miss)\.", s)
         if m:
@@ -13,4 +13,13 @@ def gender_from_name(df, name_col):
             # print(s)
             return np.nan
 
-    return df[name_col].apply(lambda s: get_gender(s))
+    def get_title(s):
+        m = re.search("\s([A-Za-z]*)\.", s)
+        return m.group(1)
+
+    if func == "Name":
+        f = get_gender
+    elif func == "Title":
+        f = get_title
+
+    return df[name_col].apply(lambda s: f(s))
