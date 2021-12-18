@@ -6,7 +6,7 @@ X, y = proc["Train"]
 col_details, run_details = proc["Configs"]
 
 # Optional add columns you wanted binned
-bin_cols = []
+bin_cols = ["Parch", "SibSp"]
 
 
 # Create the train flow

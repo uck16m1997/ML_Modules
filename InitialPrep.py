@@ -40,7 +40,12 @@ if __name__ == "__main__":
     X_test = X_test.astype(X_train.dtypes)
     ## MANUAL HERE ##
     ## FIX INCONSISTENCIES ##
-    ## DO SPECIFIC OPERATIONS ##
+    ## DO BASIC FEATURE EXTRACTION OPERATIONS ##
+    X_train["Title"] = parse_text.get_info(X_train, "Name")
+    X_test["Title"] = parse_text.get_info(X_test, "Name")
+
+    X_train["Parch+SibSp"] = X_train["Parch"] + X_train["SibSp"]
+    X_test["Parch+SibSp"] = X_test["Parch"] + X_test["SibSp"]
 
     # Find inappropriate features
     col_dict = data_prep.find_inapp(X_train)
@@ -79,7 +84,9 @@ if __name__ == "__main__":
     # will there be groups dimensionality_train reduction
     group_funcs = False
     if groups:
-        create_json_conf(col_details, "GroupsConf.json")
+        for g in groups:
+            groups[g] = list(groups[g])
+        create_json_conf(groups, "GroupsConf.json")
         group_funcs = True
 
     unique_per = 64
