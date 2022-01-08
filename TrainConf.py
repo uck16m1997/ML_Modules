@@ -6,12 +6,28 @@ X, y = proc["Train"]
 col_details, run_details = proc["Configs"]
 
 # Optional add columns you wanted binned
-bin_cols = ["Parch", "SibSp"]
+bin_cols = []
 
+# Prevent Dim Reduction
+run_details["group_funcs"] = False
 
 # Create the train flow
 train_flow = []
 
+# if bin columns are determined add binning
+if len(bin_cols) > 0:
+    train_flow.append(
+        (
+            "Binning",
+            {
+                "transformer": binning.Info_Gain_Discretizer(),
+                "fit": {
+                    "Input": [bin_cols],
+                    "Append": ["y"],
+                },
+            },
+        )
+    )
 
 # Add Encoding step for the train flow
 train_flow.append(
@@ -22,7 +38,7 @@ train_flow.append(
             "fit": {
                 "Input": [
                     ce.OneHotEncoder(use_cat_names=True),
-                    pd.Index(col_details["Categoric"]).difference(
+                    pd.Index(col_details["Categoric"] + ["Pclass"]).difference(
                         run_details["high_cardinality"]
                     ),
                 ]
@@ -47,22 +63,6 @@ train_flow.append(
         },
     )
 )
-
-
-# if bin columns are determined add binning
-if len(bin_cols) > 0:
-    train_flow.append(
-        (
-            "Binning",
-            {
-                "transformer": binning.Info_Gain_Discretizer(),
-                "fit": {
-                    "Input": [bin_cols],
-                    "Append": ["y"],
-                },
-            },
-        )
-    )
 
 
 # Add encoding for Categoric Columns with High Cardinality

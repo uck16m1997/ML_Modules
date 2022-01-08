@@ -12,7 +12,9 @@ class PCA_Transformer:
         self.groups = groups
         self.pcas = {}
         for k, v in self.groups.items():
-            self.pcas[k] = PCA(self.n_components, self.svd_solver)
+            self.pcas[k] = PCA(
+                n_components=self.n_components, svd_solver=self.svd_solver
+            )
             self.pcas[k].fit(X_train[v])
 
     def transform(self, X):
@@ -148,30 +150,38 @@ def CorrelationClustering(X, columns=None, threshold=0.2):
 
 def AgglomerativeClustering(distance_mat, threshold=0.2):
     groups = {}
-    distance_mat.replace({0: 1}, inplace=True)
+    np.fill_diagonal(distance_mat.values, 1)
     values = np.sort((np.unique(distance_mat.values)))
     values = values[values < threshold]
 
     for v in values:
-        cols = list(distance_mat.iloc[np.where(distance_mat == v)].columns)
-        k = "_".join(cols)
+        mat_filter = np.where(distance_mat == v)
+        col_filter = np.unique(mat_filter[0], return_counts=True)
+
+        if (len(col_filter[0]) - 1) != max(col_filter[1]):
+            print("Multiple Clusters")
+            raise Exception
+
+        row_filter = np.unique(mat_filter[1], return_counts=True)
+        cols = list(distance_mat.iloc[row_filter[0], col_filter[0]].columns)
+        k = " ".join(cols)
         added_list = []
         keys = list(groups.keys())
         for key in keys:
             for c in cols:
                 if c in key:
                     if len(added_list):
-                        groups[key].update(groups[added_list[0]])
-                        new_key = "_".join(groups[key])
+                        groups[added_list[0]].update(groups[added_list[0]])
+                        new_key = " ".join(groups[key])
                         groups[new_key] = groups.pop(key)
                         groups.pop(added_list[0])
                         added_list = [new_key]
                     else:
                         groups[key].update(cols)
-                        new_key = "_".join(groups[key])
+                        new_key = " ".join(groups[key])
                         groups[new_key] = groups.pop(key)
                         added_list.append(new_key)
-
+                        break
         if len(added_list) == 0:
             groups[k] = set()
             groups[k].update(cols)
